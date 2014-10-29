@@ -465,9 +465,6 @@ any) is a brace list.
 PHP does not have an \"enum\"-like keyword."
   php nil)
 
-(c-lang-defconst c-typeless-decl-kwds
-  php (append (c-lang-const c-class-decl-kwds) '("function")))
-
 (c-lang-defconst c-modifier-kwds
   php '("abstract" "const" "final" "native" "static" "strictfp"
         "synchronized" "transient" "volatile"))
@@ -797,35 +794,42 @@ example `html-mode'.  Known such libraries are:\n\t"
           (funcall 'c-indent-line)))))
 
 (defun php-c-at-vsemi-p (&optional pos)
-  "Return t on html lines (including php region border), otherwise nil.
+  "Insert virtual semicolons on html lines and after closing
+brackets.
+
 POS is a position on the line in question.
 
-This is was done due to the problem reported here:
+The check for HTML lines is done due to the problem reported here:
 
   URL `https://answers.launchpad.net/nxhtml/+question/43320'"
-  (if (not php-template-compatibility)
-      nil
-    (setq pos (or pos (point)))
-    (let ((here (point))
-          ret)
-      (save-match-data
-        (goto-char pos)
-        (beginning-of-line)
-        (setq ret (looking-at
-                   (rx
-                    (or (seq
-                         bol
-                         (0+ space)
-                         "<"
-                         (in "a-z\\?"))
-                        (seq
-                         (0+ not-newline)
-                         (in "a-z\\?")
-                         ">"
-                         (0+ space)
-                         eol))))))
-      (goto-char here)
-      ret)))
+  ;; Insert vsemi after } because it might be a function
+  ;; definition that cc-mode recognizes as a lambda, and thus
+  ;; expects it is terminated with a semicolon.
+  (if (eq (char-before (or pos (point))) ?})
+      t
+    (if (not php-template-compatibility)
+        nil
+      (setq pos (or pos (point)))
+      (let ((here (point))
+            ret)
+        (save-match-data
+          (goto-char pos)
+          (beginning-of-line)
+          (setq ret (looking-at
+                     (rx
+                      (or (seq
+                           bol
+                           (0+ space)
+                           "<"
+                           (in "a-z\\?"))
+                          (seq
+                           (0+ not-newline)
+                           (in "a-z\\?")
+                           ">"
+                           (0+ space)
+                           eol))))))
+        (goto-char here)
+        ret))))
 
 (defun php-c-vsemi-status-unknown-p ()
   "See `php-c-at-vsemi-p'."
@@ -1290,6 +1294,9 @@ a completion list."
    ;;  only add patterns here if you want to prevent cc-mode from applying
    ;;  a different face.
    '(
+     ;; Highlight function/method names
+     ("\\<function\\s-+&?\\(\\sw+\\)\\s-*(" 1 font-lock-function-name-face)
+
      ;; The dollar sign should not get a variable-name face, below
      ;; pattern resets the face to default in case cc-mode sets the
      ;; variable-name face (cc-mode does this for variables prefixed
@@ -1323,9 +1330,6 @@ a completion list."
      ;; another valid option would be using type-face, but using
      ;; constant-face because this is how it works in c++-mode.
      ("\\(\\sw+\\)::" 1 font-lock-constant-face)
-
-     ;; Highlight function/method names
-     ("\\<function\\s-+&?\\(\\sw+\\)\\s-*(" 1 font-lock-function-name-face)
 
      ;; Highlight class name after "use .. as"
      ("\\<as\\s-+\\(\\sw+\\)" 1 font-lock-type-face)

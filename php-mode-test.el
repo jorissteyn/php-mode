@@ -437,4 +437,11 @@ style from Drupal."
   "Indentation of switch case body preceeded by multiple case statements"
   (with-php-mode-test ("issue-186.php" :indent t :magic t)))
 
+(ert-deftest php-mode-test-issue-199 ()
+  "Test indentation of function inside block constructs"
+  (with-php-mode-test ("issue-199.php" :indent t :magic t)
+    (search-forward "function boolval")
+    (should (eq 'font-lock-function-name-face
+                (get-text-property (- (point) 1) 'face)))))
+
 ;;; php-mode-test.el ends here
