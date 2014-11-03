@@ -507,4 +507,11 @@ style from Drupal."
     (search-forward "static")
     (should (eq 'font-lock-keyword-face (get-text-property (- (point) 1) 'face)))))
 
+(ert-deftest php-mode-test-issue-199 ()
+  "Test indentation of function inside block constructs"
+  (with-php-mode-test ("issue-199.php" :indent t :magic t)
+    (search-forward "function boolval")
+    (should (eq 'font-lock-function-name-face
+                (get-text-property (- (point) 1) 'face)))))
+
 ;;; php-mode-test.el ends here
