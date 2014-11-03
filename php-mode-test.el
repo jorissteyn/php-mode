@@ -494,4 +494,17 @@ style from Drupal."
                         (should-not (eq 'font-lock-type-face
                                         (get-text-property (point) 'face))))))
 
+(ert-deftest php-mode-test-issue-201 ()
+  "Test highlighting of special variables"
+  (with-php-mode-test ("issue-201.php")
+    (search-forward "Start:")
+    (search-forward "$this")
+    (should (eq 'font-lock-constant-face (get-text-property (- (point) 1) 'face)))
+    (search-forward "$that")
+    (should (eq 'font-lock-constant-face (get-text-property (- (point) 1) 'face)))
+    (search-forward "self")
+    (should (eq 'font-lock-keyword-face (get-text-property (- (point) 1) 'face)))
+    (search-forward "static")
+    (should (eq 'font-lock-keyword-face (get-text-property (- (point) 1) 'face)))))
+
 ;;; php-mode-test.el ends here
