@@ -502,8 +502,7 @@ PHP does not have an \"enum\"-like keyword."
         "null"))
 
 (c-lang-defconst c-lambda-kwds
-  php '("function"
-        "use"))
+  php '("use"))
 
 (c-lang-defconst c-other-kwds
   "Keywords not accounted for by any other `*-kwds' language constant."
@@ -574,6 +573,33 @@ might be to handle switch and goto labels differently."
                                (c-lang-const c-constant-kwds))
                        :test 'string-equal))))
 
+(defun c-inside-bracelist-p (containing-sexp paren-state)
+  "Override cc-engine.el braces list detection.
+
+Brace lists do not exist in PHP but cc-mode gets confused when
+using a closure in a statement:
+
+$test = function() {
+    // Not a bracelist!
+};"
+  nil)
+
+(defun php-lineup-arglist-cont-nonempty (langelem)
+  "Line up arglist-cont-nonempty syntax.
+
+Uses c-lineup-cascaded-calls if configured or c-lineup-arglist
+otherwise but only if not in a closure:
+
+test(1, function() {
+    // do defun-block-intro but not arglist-cont-nonempty
+}); // do defun-close but not arglist-cont-nonempty"
+  (unless (catch 'defun-symbol-found
+            (dolist (elem (c-guess-basic-syntax))
+              (if (memq (car elem) '(defun-block-intro defun-close))
+                  (throw 'defun-symbol-found elem))))
+    (or (php-lineup-cascaded-calls langelem)
+        (c-lineup-arglist langelem))))
+
 (defun php-lineup-cascaded-calls (langelem)
   "Line up chained methods using `c-lineup-cascaded-calls',
 but only if the setting is enabled"
@@ -586,7 +612,7 @@ but only if the setting is enabled"
    (c-doc-comment-style . javadoc)
    (c-offsets-alist . ((arglist-close . php-lineup-arglist-close)
                        (arglist-cont . (first php-lineup-cascaded-calls 0))
-                       (arglist-cont-nonempty . (first php-lineup-cascaded-calls c-lineup-arglist))
+                       (arglist-cont-nonempty . php-lineup-arglist-cont-nonempty)
                        (arglist-intro . php-lineup-arglist-intro)
                        (case-label . +)
                        (class-open . -)
