@@ -61,9 +61,9 @@ These are the ###php-mode-test### comments. Valid magics are
 listed in `php-mode-test-valid-magics'; no other directives will
 be processed."
   (cl-letf (((symbol-function 'indent)
-             (lambda (offset) (equal (current-indentation) offset)))
+             (lambda (offset) (should (equal (current-indentation) offset))))
             ((symbol-function 'syntax)
-             (lambda (expect) (equal (caar (c-guess-basic-syntax)) expect))))
+             (lambda (expect) (should (equal (caar (c-guess-basic-syntax)) expect)))))
     (let (directives answers)
       (save-excursion
         (goto-char (point-min))
@@ -116,8 +116,8 @@ run with specific customizations set."
      ,(if indent
           '(indent-region (point-min) (point-max)))
      ,(if magic
-          '(should (cl-reduce (lambda (l r) (and l r))
-                              (php-mode-test-process-magics))))
+          '(cl-reduce (lambda (l r) (and l r))
+                      (php-mode-test-process-magics)))
      (goto-char (point-min))
      (let ((case-fold-search nil))
        ,@body)))
