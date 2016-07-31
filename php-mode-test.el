@@ -44,7 +44,7 @@
                                               default-directory))
   "Directory containing the `php-mode' test files.")
 
-(defvar php-mode-test-valid-magics '(indent)
+(defvar php-mode-test-valid-magics '(indent syntax)
   "List of allowed \"magic\" directives which can appear in test cases.")
 
 (defvar php-mode-test-magic-regexp "###php-mode-test### \\((.+)\\)"
@@ -52,7 +52,8 @@
 
 ;; cl-letf does not work for global function on Emacs 24.3 or lower versions
 (when (and (= emacs-major-version 24) (<= emacs-minor-version 3))
-  (defun indent ()))
+  (defun indent ())
+  (defun syntax ()))
 
 (defun php-mode-test-process-magics ()
   "Process the test directives in the current buffer.
@@ -60,7 +61,9 @@ These are the ###php-mode-test### comments. Valid magics are
 listed in `php-mode-test-valid-magics'; no other directives will
 be processed."
   (cl-letf (((symbol-function 'indent)
-             (lambda (offset) (equal (current-indentation) offset))))
+             (lambda (offset) (equal (current-indentation) offset)))
+            ((symbol-function 'syntax)
+             (lambda (expect) (equal (caar (c-guess-basic-syntax)) expect))))
     (let (directives answers)
       (save-excursion
         (goto-char (point-min))
@@ -611,6 +614,10 @@ style from Drupal."
     (set-buffer-modified-p nil)
     (php-mode)
     (should-not (buffer-modified-p))))
+
+(ert-deftest php-mode-test-issue-291 ()
+  "Syntactic analysis of functions."
+  (with-php-mode-test ("issue-291.php" :magic t)))
 
 ;;; php-mode-test.el ends here
 
